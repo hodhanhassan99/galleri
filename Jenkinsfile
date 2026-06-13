@@ -1,6 +1,10 @@
 pipeline {
     agent any 
 
+    environment {
+        PORT = '5000'
+    }
+
     tools {
         nodejs 'NodeJS'
     }
@@ -18,9 +22,10 @@ pipeline {
                 sh 'node -v'
             }
         }
-        stage('Deploy Plan') {
+        stage('Deploy') {
             steps {
-                echo 'Ready for Render deployment.'
+                echo 'Triggering production deployment to Render via webhook...'
+                sh "curl -X POST 'https://api.render.com/deploy/srv-d8mpv1cm0tmc73dded20?key=Av8n-u788JQ'"
             }
         }
     }
