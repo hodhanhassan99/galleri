@@ -48,7 +48,7 @@ pipeline {
               port: 2525,
               auth: {
                 user: 'bc8a23b7476a04',
-                pass: 'YOUR_ACTUAL_MAILTRAP_PASSWORD_HERE'
+                pass: 'ef61304cc4dd9b'
               }
             });
             let mailOptions = {
