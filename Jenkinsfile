@@ -38,11 +38,14 @@ pipeline {
 
     post {
         failure {
-            echo 'Pipeline failed! Sending notification email...'
-            // Sends an email notification to you when a stage breaks
-            mail to: 'hodhanhassan992@gmail.com',
-                 subject: "Failed Jenkins Job: ${currentBuild.fullDisplayName}",
-                 body: "Something went wrong with the build please check the console logs at ${env.BUILD_URL} to debug the issue."
+            echo 'Pipeline failed, Sending authenticated notification email via Extended Mailer...'
+            emailext (
+                to: 'hodhanhassan992@gmail.com',
+                subject: "Failed Jenkins Job: ${currentBuild.fullDisplayName}",
+                body: "Something went wrong with the build. Please check the console logs at ${env.BUILD_URL} to debug the issue.",
+                replyTo: 'hodhanhassan992@gmail.com',
+                mimeType: 'text/html'
+            )
         }
     }
 }
