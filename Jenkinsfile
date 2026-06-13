@@ -66,7 +66,7 @@ pipeline {
         success {
             echo 'Pipeline successful! Dispatching Slack notification...'
             withCredentials([string(credentialsId: 'slack-webhook-id', variable: 'SLACK_URL')]) {
-                sh 'curl -X POST -H "Content-type: application/json" --data \'{"text":" Build #${BUILD_NUMBER} successful! Deployed to Render: ${BUILD_URL}"}\' $SLACK_URL'
+                sh 'curl -X POST -H "Content-type: application/json" --data \'{"text":"Build #${BUILD_NUMBER} successful! Deployed to Render: ${BUILD_URL}"}\' ${SLACK_URL}'
             }
         }
     }
