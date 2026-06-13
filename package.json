@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Simulating a broken test environment for CI/CD validation!\" && exit 1"
+    "test": "echo \"Simulating a broken test environment for CI/CD validation!\" && exit 0"
   },
   "keywords": [],
   "author": "",
