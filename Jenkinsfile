@@ -54,18 +54,20 @@ pipeline {
             let mailOptions = {
               from: 'jenkins-ci-cd@galleri.internal',
               to: 'hodhanhassan992@gmail.com',
-              subject: '🚨 Alert: Failed Jenkins Job - ${BUILD_TAG}',
+              subject: 'Alert: Failed Jenkins Job - ${BUILD_TAG}',
               text: 'Something went wrong with the pipeline execution. Check logs directly at: ${BUILD_URL}'
             };
             transport.sendMail(mailOptions, (error, info) => {
-              if (error) { 
-                console.log('Mailer Execution Error: ' + error);
-                process.exit(1);
-              }
-              console.log('Success! Message routed safely to Mailtrap Inbox ID: ' + info.messageId);
+              if (error) { process.exit(1); }
             });
             "
             '''
+        }
+        success {
+            echo 'Pipeline successful! Dispatching Slack notification...'
+            withCredentials([string(credentialsId: 'slack-webhook-id', variable: 'SLACK_URL')]) {
+                sh 'curl -X POST -H "Content-type: application/json" --data \'{"text":" Build #${BUILD_NUMBER} successful! Deployed to Render: ${BUILD_URL}"}\' $SLACK_URL'
+            }
         }
     }
 }
