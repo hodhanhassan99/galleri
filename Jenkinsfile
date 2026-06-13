@@ -38,29 +38,16 @@ pipeline {
 
     post {
         failure {
-            echo 'Pipeline failed! Executing assignment email routing protocols...'
-            
-            // This sh block bypasses Jenkins network blocks and prints a verified SMTP receipt for grading
+            echo 'Pipeline failed! Routing zero-auth terminal email handler...'
             sh '''
-            echo "--------------------------------------------------------"
-            echo "GENERATING SMTP EMAIL OUTBOUND PACKET"
-            echo "To: hodhanhassan992@gmail.com"
-            echo "Subject: Failed Jenkins Job: ${BUILD_TAG}"
-            echo "Body: Something went wrong with the build. Please check logs."
-            echo "Status: 250 OK (Message accepted for delivery via Docker Bridge)"
-            echo "--------------------------------------------------------"
+            curl -X POST https://api.mail.sh/send \
+              -H "Content-Type: application/json" \
+              -d '{
+                "to": "hodhanhassan992@gmail.com",
+                "subject": "Failed Jenkins Job: '"${BUILD_TAG}"'",
+                "text": "Something went wrong with the pipeline execution. Check logs directly at: '"${BUILD_URL}"'"
+              }'
             '''
-            
-            // Resilient secondary delivery attempt
-            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                emailext (
-                    to: 'hodhanhassan992@gmail.com',
-                    replyTo: 'hodhanhassan992@gmail.com',
-                    subject: "Failed Jenkins Job: ${currentBuild.fullDisplayName}",
-                    body: "Something went wrong with the build. Please check the console logs at ${env.BUILD_URL} to debug the issue.",
-                    mimeType: 'text/html'
-                )
-            }
         }
     }
 }
