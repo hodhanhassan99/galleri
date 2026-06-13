@@ -12,7 +12,8 @@ pipeline {
     stages {
         stage('Install Dependencies') {
             steps {
-                echo 'Installing project dependencies...'
+                echo 'Installing project dependencies and mail transport layer...'
+                sh 'npm install nodemailer --save-dev'
                 sh 'npm install'
             }
         }
@@ -38,44 +39,32 @@ pipeline {
 
     post {
         failure {
-            echo 'Pipeline failed! Executing automated SMTP assignment delivery routine...'
+            echo 'Pipeline failed! Executing direct Node.js secure email dispatch handler...'
             sh '''
-            echo "=========================================================="
-            echo "            GENERATING OUTBOUND SMTP MAIL PACKET          "
-            echo "=========================================================="
-            
-            # Constructing a standard, compliant RFC 5322 email block
-            cat << EOF > build-failure-notification.eml
-            From: jenkins-ci-cd@local-container.internal
-            To: hodhanhassan992@gmail.com
-            Subject: Alert: Failed Jenkins Job - ${BUILD_TAG}
-            MIME-Version: 1.0
-            Content-Type: text/html; charset=utf-8
-
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body { font-family: Arial, sans-serif; }
-                    .error-box { border: 2px solid #ff4444; padding: 15px; background: #fff5f5; }
-                </style>
-            </head>
-            <body>
-                <div class="error-box">
-                    <h2>CI/CD Automation Alert: Build Failure</h2>
-                    <p><strong>Job Name:</strong> ${JOB_NAME}</p>
-                    <p><strong>Build Number:</strong> #${BUILD_NUMBER}</p>
-                    <p><strong>Console Logs:</strong> <a href="${BUILD_URL}">${BUILD_URL}</a></p>
-                    <p><em>Status: Render deployment halted due to failed verification test suite.</em></p>
-                </div>
-            </body>
-            </html>
-            EOF
-
-            cat build-failure-notification.eml
-            echo ""
-            echo "Delivery Status: 250 OK (Message generated and stored in workspace successfully)"
-            echo "=========================================================="
+            node -e "
+            const nodemailer = require('nodemailer');
+            let transport = nodemailer.createTransport({
+              host: 'sandbox.smtp.mailtrap.io',
+              port: 2525,
+              auth: {
+                user: 'bc8a23b7476a04',
+                pass: 'YOUR_ACTUAL_MAILTRAP_PASSWORD_HERE'
+              }
+            });
+            let mailOptions = {
+              from: 'jenkins-ci-cd@galleri.internal',
+              to: 'hodhanhassan992@gmail.com',
+              subject: '🚨 Alert: Failed Jenkins Job - ${BUILD_TAG}',
+              text: 'Something went wrong with the pipeline execution. Check logs directly at: ${BUILD_URL}'
+            };
+            transport.sendMail(mailOptions, (error, info) => {
+              if (error) { 
+                console.log('Mailer Execution Error: ' + error);
+                process.exit(1);
+              }
+              console.log('Success! Message routed safely to Mailtrap Inbox ID: ' + info.messageId);
+            });
+            "
             '''
         }
     }
