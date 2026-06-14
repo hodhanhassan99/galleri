@@ -17,10 +17,10 @@ pipeline {
                 sh 'npm install'
             }
         }
-        stage('Build & Validate') {
-            steps {
-                echo 'Validating system state...'
-                sh 'node -v'
+       stage('Build & Validate') {
+          steps {
+            echo 'Testing failure logic...'
+            sh 'exit 1' 
             }
         }
         stage('Run Tests') {
