@@ -12,26 +12,26 @@ pipeline {
     stages {
         stage('Install Dependencies') {
             steps {
-                echo 'Installing project dependencies and mail transport layer...'
+                echo 'Installing project dependencies...'
                 sh 'npm install nodemailer --save-dev'
                 sh 'npm install'
             }
         }
-       stage('Build & Validate') {
+        stage('Build & Validate') {
           steps {
-            echo 'Testing failure logic...'
+            echo 'Testing failure logic - FORCING FAILURE...'
             sh 'exit 1' 
             }
         }
         stage('Run Tests') {
             steps {
-                echo 'Running automated tests on the test branch...'
+                echo 'Running automated tests...'
                 sh 'npm test'
             }
         }
         stage('Deploy') {
             steps {
-                echo 'Triggering production deployment to Render via webhook...'
+                echo 'Triggering deployment...'
                 sh "curl -X POST 'https://api.render.com/deploy/srv-d8mpv1cm0tmc73dded20?key=Av8n-u788JQ'"
             }
         }
@@ -39,7 +39,7 @@ pipeline {
 
     post {
         failure {
-            echo 'Pipeline failed! Sending direct email notification to Gmail...'
+            echo 'Pipeline failed! Sending direct email...'
             withCredentials([usernamePassword(credentialsId: 'gmail-smtp-auth', passwordVariable: 'GMAIL_PASS', usernameVariable: 'GMAIL_USER')]) {
                 sh '''
                 node -e "
@@ -55,17 +55,18 @@ pipeline {
                   from: '${GMAIL_USER}',
                   to: 'hodhanhassan992@gmail.com',
                   subject: 'Alert: Failed Jenkins Job - ${BUILD_TAG}',
-                  text: 'The pipeline failed. Check logs directly at: ${BUILD_URL}'
+                  text: 'The pipeline failed. Check logs at: ${BUILD_URL}'
                 };
                 transport.sendMail(mailOptions, (error, info) => {
                   if (error) { console.log(error); process.exit(1); }
+                  console.log('Email sent successfully!');
                 });
                 "
                 '''
             }
         }
         success {
-            echo 'Pipeline successful! Dispatching Slack notification...'
+            echo 'Pipeline successful! Dispatching Slack...'
             withCredentials([string(credentialsId: 'slack-webhook-id', variable: 'SLACK_URL')]) {
                 sh 'curl -X POST -H "Content-type: application/json" --data \'{"text":"Build #${BUILD_NUMBER} successful! Deployed to Render: ${BUILD_URL}"}\' ${SLACK_URL}'
             }
