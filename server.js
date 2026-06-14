@@ -4,42 +4,37 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const path = require('path');
 
-// Import the configuration file
-const config = require('./_config');
+// Routes
+const index = require('./routes/index');
+const image = require('./routes/image');
 
-// Define routes
-let index = require('./routes/index');
-let image = require('./routes/image');
 
-// Database connection string based on environment or fallback to development
-let connectionString = config.mongoURI[process.env.NODE_ENV] || config.mongoURI.development;
+const dbPassword = process.env.DB_PASSWORD;
+const dbName = 'darkroom'; 
+const connectionString = `mongodb+srv://hodhan:${dbPassword}@cluster0.v9ky2b5.mongodb.net/${dbName}?appName=Cluster0`;
 
-// connecting the database to MongoDB Atlas cloud
-mongoose.connect(connectionString, { useNewUrlParser: true, useUnifiedTopology: true }, (err) => {
-    if (err) {
-        console.log("Database connection error: ", err);
-    }
-});
+console.log("DEBUG: Connecting to:", connectionString.replace(dbPassword, "********"));
 
-// test if the database has connected successfully
-let db = mongoose.connection;
-db.once('open', () => {
-    console.log('Database connected successfully to MongoDB Atlas Cloud!');
-});
+mongoose.connect(connectionString)
+    .then(() => {
+        console.log('Database connected successfully to MongoDB Atlas Cloud!');
+    })
+    .catch((err) => {
+        console.error("Database connection error: ", err);
+    });
 
-// Initializing the app
+// --- APP INITIALIZATION ---
 const app = express();
 
 // View Engine
 app.set('view engine', 'ejs');
 
-// Set up the public folder
+// Middleware
 app.use(express.static(path.join(__dirname, 'public')));
-
-// body parser middleware
 app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// Routes middleware
+// Routes
 app.use('/', index);
 app.use('/image', image);
 
