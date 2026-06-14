@@ -39,29 +39,30 @@ pipeline {
 
     post {
         failure {
-            echo 'Pipeline failed! Executing direct Node.js secure email dispatch handler...'
-            sh '''
-            node -e "
-            const nodemailer = require('nodemailer');
-            let transport = nodemailer.createTransport({
-              host: 'sandbox.smtp.mailtrap.io',
-              port: 2525,
-              auth: {
-                user: 'bc8a23b7476a04',
-                pass: 'ef61304cc4dd9b'
-              }
-            });
-            let mailOptions = {
-              from: 'jenkins-ci-cd@galleri.internal',
-              to: 'hodhanhassan992@gmail.com',
-              subject: 'Alert: Failed Jenkins Job - ${BUILD_TAG}',
-              text: 'Something went wrong with the pipeline execution. Check logs directly at: ${BUILD_URL}'
-            };
-            transport.sendMail(mailOptions, (error, info) => {
-              if (error) { process.exit(1); }
-            });
-            "
-            '''
+            echo 'Pipeline failed! Sending direct email notification to Gmail...'
+            withCredentials([usernamePassword(credentialsId: 'gmail-smtp-auth', passwordVariable: 'GMAIL_PASS', usernameVariable: 'GMAIL_USER')]) {
+                sh '''
+                node -e "
+                const nodemailer = require('nodemailer');
+                let transport = nodemailer.createTransport({
+                  service: 'gmail',
+                  auth: {
+                    user: '${GMAIL_USER}',
+                    pass: '${GMAIL_PASS}'
+                  }
+                });
+                let mailOptions = {
+                  from: '${GMAIL_USER}',
+                  to: 'hodhanhassan992@gmail.com',
+                  subject: 'Alert: Failed Jenkins Job - ${BUILD_TAG}',
+                  text: 'The pipeline failed. Check logs directly at: ${BUILD_URL}'
+                };
+                transport.sendMail(mailOptions, (error, info) => {
+                  if (error) { console.log(error); process.exit(1); }
+                });
+                "
+                '''
+            }
         }
         success {
             echo 'Pipeline successful! Dispatching Slack notification...'
